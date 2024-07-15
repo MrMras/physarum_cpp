@@ -57,7 +57,7 @@ int main(int argc, char** argv) {
 	float sensors[3] = { -SENSOR_ANGLE, 0.f, SENSOR_ANGLE };
 	float sensed_x;
 	float sensed_y;
-	std::vector<float> sensed(3);
+	float sensed[3];
 
 	for (int STEP = 0; STEP < NUM_STEPS; STEP++) {
 		// Iterate sense, move, rotate for each agent
@@ -65,7 +65,7 @@ int main(int argc, char** argv) {
 		for (Agent& agent : agents) {
 			// 2. Sense the trail field
 
-			for (int i = 0; i <= SENSOR_COUNT; i++) {
+			for (int i = 0; i < 3; i++) {
 				sensed_x = std::round(agent.pos[0] + std::cos(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				sensed_y = std::round(agent.pos[0] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				// Check if out of bounds, return 0 otherwise
