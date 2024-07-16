@@ -2,6 +2,8 @@
 #include <cmath>
 #include <tira/image.h>
 #include <vector>
+#include <filesystem>
+#include <string>
 
 // Global constants
 const float PI = 3.14159265358f;
@@ -13,7 +15,9 @@ const int SHAPE_WIDTH = 100;
 const int NUM_STEPS = 5000;
 const float POPULATION_RATIO = 0.03f; // between 0.03 and 0.15
 const int NUM_AGENTS = std::floor(SHAPE_HEIGHT * SHAPE_WIDTH * POPULATION_RATIO);
-const bool PERIODIC_BOUNDARY = true;
+const bool PERIODIC_BOUNDARY = false;
+const bool SAVE_TRAIL = true;
+int token; // Random token of the folder
 
 // Agent parameters
 int SENSOR_COUNT = 3;
@@ -36,18 +40,24 @@ struct Agent {
 
 int main(int argc, char** argv) {
 	// Setup the mask
+	srand(time(NULL));
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 			convolveMask(i, j, 0) = 1.0f / 9;
 		}
+	}
+	// Create the folder if needed
+	if (SAVE_TRAIL) {
+		token = 52;
+		std::filesystem::create_directories("./sim_" + std::to_string(token));
 	}
 
 	std::vector<Agent> agents;
 	// 1.1 Initialize agents
 	float random_x, random_y, random_theta;
 	for (int i = 0; i < NUM_AGENTS; i++) {
-		random_x = float(rand() % 100) / 100.f;
-		random_y = float(rand() % 100) / 100.f;
+		random_x = float(rand() % 1000) / 1000.f * (SHAPE_WIDTH - 1);
+		random_y = float(rand() % 1000) / 1000.f * (SHAPE_HEIGHT - 1);
 		random_theta = float(rand() % 314) / 314.f * 2 * 3.14159265358f;
 		agents.push_back(Agent({ {random_x, random_y}, random_theta }));
 	}
@@ -84,7 +94,6 @@ int main(int argc, char** argv) {
 				}
 				
 			}
-
 			// Direction choosing algorithm
 			float index;
 			if (sensed[1] > sensed[0] && sensed[1] > sensed[2]) {
@@ -126,7 +135,7 @@ int main(int argc, char** argv) {
 				// Check if out of bounds, turn around and move back into the field
 				if (std::round(agent.pos[0]) >= SHAPE_WIDTH || std::round(agent.pos[0]) < 0 ||
 					std::round(agent.pos[1]) >= SHAPE_HEIGHT || std::round(agent.pos[1]) < 0) {
-					agent.theta += PI;
+					agent.theta += PI * ((rand() % 2) * 2 - 1);
 					agent.pos[0] += std::cos(agent.theta) * AGENT_STEP;
 					agent.pos[1] += std::sin(agent.theta) * AGENT_STEP;
 				}
@@ -163,7 +172,6 @@ int main(int argc, char** argv) {
 		// 6.2. Decay
 
 		// trailField *= DECAY; // Possibly add the operator to tiralib/image.h
-		
 		for (int x = 0; x < SHAPE_WIDTH; x++) {
 			for (int y = 0; y < SHAPE_HEIGHT; y++) {
 				trailField(x, y, 0) = trailField(x, y, 0) * (1 - DECAY);
@@ -171,7 +179,10 @@ int main(int argc, char** argv) {
 		}
 
 		
-
+		if (SAVE_TRAIL && (STEP % 50 == 0 || STEP == 2)) {
+			trailField.cmap(ColorMap::Magma).save("./sim_" + std::to_string(token) + "/step_" + std::to_string(STEP) + ".bmp");
+			// ./sim_token/step_50.bmp
+		}
 	}
 	
 
