@@ -10,20 +10,20 @@ const float PI = 3.14159265358f;
 const float CONVERSION_DEG_TO_RAD = 2.f * PI / 360.f;
 
 // Simulation parameters
-const int SHAPE_HEIGHT = 200;
 const int SHAPE_WIDTH = 200;
+const int SHAPE_HEIGHT = 200;
 const int NUM_STEPS = 5000;
-const float POPULATION_RATIO = 0.20f; // between 0.03 and 0.15
+const float POPULATION_RATIO = 0.2f; // between 0.03 and 0.15
 const int NUM_AGENTS = std::floor(SHAPE_HEIGHT * SHAPE_WIDTH * POPULATION_RATIO);
-const bool PERIODIC_BOUNDARY = true;
+const bool PERIODIC_BOUNDARY = false;
 const bool SAVE_TRAIL = true;
-const int SAVE_STEP = 1;
+const int SAVE_STEP = 50;
 int token; // Random token of the folder
 
 // Agent parameters
 int SENSOR_COUNT = 3;
 float SENSOR_OFFSET = 15.f;
-float SENSOR_ANGLE = 45.0f * CONVERSION_DEG_TO_RAD;
+float SENSOR_ANGLE = 45.f * CONVERSION_DEG_TO_RAD;
 
 float ROTATION_ANGLE = 45.0f * CONVERSION_DEG_TO_RAD;
 float AGENT_STEP = 1.f; // Move, step size
@@ -32,12 +32,16 @@ float DECAY = 0.1f;
 
 tira::image<float> convolveMask(3, 3, 1); // 3x3 mask for convolving
 
-tira::image<float> trailField(SHAPE_HEIGHT, SHAPE_WIDTH, 1);
+tira::image<float> trailField(SHAPE_WIDTH, SHAPE_HEIGHT, 1);
 
 struct Agent {
 	float pos[2];
 	float theta; // in radians
 };
+
+float customRound(float value) {
+	return (value >= 0.0) ? std::floor(value + 0.5) : std::ceil(value - 0.5);
+}
 
 int main(int argc, char** argv) {
 	// Setup the mask
@@ -79,8 +83,8 @@ int main(int argc, char** argv) {
 		for (Agent& agent : agents) {
 			// 2. Sense the trail field
 			for (int i = 0; i < 3; i++) {
-				sensed_x = std::round(agent.pos[0] + std::cos(agent.theta + sensors[i]) * SENSOR_OFFSET);
-				sensed_y = std::round(agent.pos[1] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
+				sensed_x = customRound(agent.pos[0] + std::cos(agent.theta + sensors[i]) * SENSOR_OFFSET);
+				sensed_y = customRound(agent.pos[1] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				if (PERIODIC_BOUNDARY) {
 					sensed[i] = trailField((sensed_x + SHAPE_WIDTH) % SHAPE_WIDTH, (sensed_y + SHAPE_HEIGHT) % SHAPE_HEIGHT, 0);
 				}
@@ -119,23 +123,23 @@ int main(int argc, char** argv) {
 			agent.pos[1] += std::sin(agent.theta) * AGENT_STEP;
 			if (PERIODIC_BOUNDARY) {
 				// Check if out of bounds, trace back to the opposite field
-				if (std::round(agent.pos[0]) >= SHAPE_WIDTH) {
+				if (customRound(agent.pos[0]) >= SHAPE_WIDTH) {
 					agent.pos[0] -= SHAPE_WIDTH;
 				}
-				else if (std::round(agent.pos[0]) < 0) {
+				else if (customRound(agent.pos[0]) < 0) {
 					agent.pos[0] += SHAPE_WIDTH;
 				}
-				if (std::round(agent.pos[1]) >= SHAPE_HEIGHT) {
+				if (customRound(agent.pos[1]) >= SHAPE_HEIGHT) {
 					agent.pos[1] -= SHAPE_HEIGHT;
 				}
-				else if (std::round(agent.pos[1]) < 0) {
+				else if (customRound(agent.pos[1]) < 0) {
 					agent.pos[1] += SHAPE_HEIGHT;
 				}
 			}
 			else {
 				// Check if out of bounds, turn around and move back into the field
-				if (std::round(agent.pos[0]) >= SHAPE_WIDTH || std::round(agent.pos[0]) < 0 ||
-					std::round(agent.pos[1]) >= SHAPE_HEIGHT || std::round(agent.pos[1]) < 0) {
+				if (customRound(agent.pos[0]) >= SHAPE_WIDTH || customRound(agent.pos[0]) < 0 ||
+					customRound(agent.pos[1]) >= SHAPE_HEIGHT || customRound(agent.pos[1]) < 0) {
 					agent.theta += PI * ((rand() % 2) * 2 - 1);
 					agent.pos[0] += std::cos(agent.theta) * AGENT_STEP;
 					agent.pos[1] += std::sin(agent.theta) * AGENT_STEP;
@@ -145,7 +149,7 @@ int main(int argc, char** argv) {
 		
 		// 5. Deposit
 		for (Agent& agent : agents) {
-			trailField(std::round(agent.pos[0]), std::round(agent.pos[1]), 0) += DELTA;
+			trailField(customRound(agent.pos[0]), customRound(agent.pos[1]), 0) += DELTA;
 		}
 		
 		// 6. Update Trail field
@@ -179,9 +183,8 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		
-		if (SAVE_TRAIL && (STEP % SAVE_STEP)) {
-			trailField.cmap(ColorMap::Magma).save("./sim_" + std::to_string(token) + "/step_" + std::to_string(STEP) + ".bmp");
+		if (SAVE_TRAIL && (STEP % SAVE_STEP == 0)) {
+			trailField.cmap(0.f, 3.f, ColorMap::Magma).save("./sim_" + std::to_string(token) + "/step_" + std::to_string(STEP) + ".bmp");
 			// ./sim_token/step_50.bmp
 		}
 	}
