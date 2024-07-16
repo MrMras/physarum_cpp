@@ -55,26 +55,34 @@ int main(int argc, char** argv) {
 	
 	// 1.2 Setup sensors
 	float sensors[3] = { -SENSOR_ANGLE, 0.f, SENSOR_ANGLE };
-	float sensed_x;
-	float sensed_y;
+	int sensed_x;
+	int sensed_y;
 	float sensed[3];
 
 	for (int STEP = 0; STEP < NUM_STEPS; STEP++) {
 		// Iterate sense, move, rotate for each agent
-		std::cout << STEP << std::endl;
-		int k = 0;
+		if (!(STEP % 100)) {
+			std::cout << STEP << std::endl;
+		}
+
 		for (Agent& agent : agents) {
 			// 2. Sense the trail field
 			for (int i = 0; i < 3; i++) {
 				sensed_x = std::round(agent.pos[0] + std::cos(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				sensed_y = std::round(agent.pos[0] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
-				// Check if out of bounds, return 0 otherwise
-				if (sensed_x < 0 || sensed_x >= SHAPE_WIDTH || sensed_y < 0 || sensed_y >= SHAPE_HEIGHT) {
-					sensed[i] = 0;
+				if (PERIODIC_BOUNDARY) {
+					sensed[i] = trailField((sensed_x + SHAPE_WIDTH) % SHAPE_WIDTH, (sensed_y + SHAPE_HEIGHT) % SHAPE_HEIGHT, 0);
 				}
 				else {
-					sensed[i] = trailField(sensed_x, sensed_y, 0);
+					// Check if out of bounds, return 0 otherwise
+					if (sensed_x < 0 || sensed_x >= SHAPE_WIDTH || sensed_y < 0 || sensed_y >= SHAPE_HEIGHT) {
+						sensed[i] = 0;
+					}
+					else {
+						sensed[i] = trailField(sensed_x, sensed_y, 0);
+					}
 				}
+				
 			}
 
 			// Direction choosing algorithm
