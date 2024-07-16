@@ -10,21 +10,22 @@ const float PI = 3.14159265358f;
 const float CONVERSION_DEG_TO_RAD = 2.f * PI / 360.f;
 
 // Simulation parameters
-const int SHAPE_HEIGHT = 100;
-const int SHAPE_WIDTH = 100;
+const int SHAPE_HEIGHT = 200;
+const int SHAPE_WIDTH = 200;
 const int NUM_STEPS = 5000;
-const float POPULATION_RATIO = 0.03f; // between 0.03 and 0.15
+const float POPULATION_RATIO = 0.20f; // between 0.03 and 0.15
 const int NUM_AGENTS = std::floor(SHAPE_HEIGHT * SHAPE_WIDTH * POPULATION_RATIO);
-const bool PERIODIC_BOUNDARY = false;
+const bool PERIODIC_BOUNDARY = true;
 const bool SAVE_TRAIL = true;
+const int SAVE_STEP = 1;
 int token; // Random token of the folder
 
 // Agent parameters
 int SENSOR_COUNT = 3;
-float SENSOR_OFFSET = 9.f;
+float SENSOR_OFFSET = 15.f;
 float SENSOR_ANGLE = 45.0f * CONVERSION_DEG_TO_RAD;
 
-float ROTATION_ANGLE = 45.0f;
+float ROTATION_ANGLE = 45.0f * CONVERSION_DEG_TO_RAD;
 float AGENT_STEP = 1.f; // Move, step size
 float DELTA = 0.1f; // Deposit value
 float DECAY = 0.1f;
@@ -79,7 +80,7 @@ int main(int argc, char** argv) {
 			// 2. Sense the trail field
 			for (int i = 0; i < 3; i++) {
 				sensed_x = std::round(agent.pos[0] + std::cos(agent.theta + sensors[i]) * SENSOR_OFFSET);
-				sensed_y = std::round(agent.pos[0] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
+				sensed_y = std::round(agent.pos[1] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				if (PERIODIC_BOUNDARY) {
 					sensed[i] = trailField((sensed_x + SHAPE_WIDTH) % SHAPE_WIDTH, (sensed_y + SHAPE_HEIGHT) % SHAPE_HEIGHT, 0);
 				}
@@ -179,7 +180,7 @@ int main(int argc, char** argv) {
 		}
 
 		
-		if (SAVE_TRAIL && (STEP % 50 == 0 || STEP == 2)) {
+		if (SAVE_TRAIL && (STEP % SAVE_STEP)) {
 			trailField.cmap(ColorMap::Magma).save("./sim_" + std::to_string(token) + "/step_" + std::to_string(STEP) + ".bmp");
 			// ./sim_token/step_50.bmp
 		}
