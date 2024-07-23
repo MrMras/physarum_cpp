@@ -8,16 +8,17 @@
 // Global constants
 const float PI = 3.14159265358f;
 const float CONVERSION_DEG_TO_RAD = 2.f * PI / 360.f;
+const float multiplier = 4 * std::sqrt(2) + 13;
 
 // Simulation parameters
-const int SHAPE_WIDTH = 200;
-const int SHAPE_HEIGHT = 200;
+const int SHAPE_WIDTH = 300;
+const int SHAPE_HEIGHT = 300;
 const int NUM_STEPS = 5000;
-const float POPULATION_RATIO = 0.2f; // between 0.03 and 0.15
+const float POPULATION_RATIO = 0.6f; // between 0.03 and 0.15
 const int NUM_AGENTS = std::floor(SHAPE_HEIGHT * SHAPE_WIDTH * POPULATION_RATIO);
 const bool PERIODIC_BOUNDARY = false;
 const bool SAVE_TRAIL = true;
-const int SAVE_STEP = 50;
+const int SAVE_STEP = 1;
 int token; // Random token of the folder
 
 // Agent parameters
@@ -40,17 +41,30 @@ struct Agent {
 };
 
 float customRound(float value) {
-	return (value >= 0.0) ? std::floor(value + 0.5) : std::ceil(value - 0.5);
+	return (value >= 0.0) ? std::floor(value + 0.5) : std::ceil(value - 0.49999);
 }
 
 int main(int argc, char** argv) {
 	// Setup the mask
 	srand(time(NULL));
+	convolveMask(1, 1, 0) = 2 / 3.f;
+
+	convolveMask(0, 1, 0) = 1 / 18.f;
+	convolveMask(1, 0, 0) = convolveMask(0, 1, 0);
+	convolveMask(2, 1, 0) = convolveMask(0, 1, 0);
+	convolveMask(1, 2, 0) = convolveMask(0, 1, 0);
+
+	convolveMask(0, 0, 0) = 1 / 36.f;
+	convolveMask(2, 0, 0) = convolveMask(0, 0, 0);
+	convolveMask(0, 2, 0) = convolveMask(0, 0, 0);
+	convolveMask(2, 2, 0) = convolveMask(0, 0, 0);
+	/*
 	for (int i = 0; i < 3; i++) {
 		for (int j = 0; j < 3; j++) {
 			convolveMask(i, j, 0) = 1.0f / 9;
 		}
 	}
+	*/
 	// Create the folder if needed
 	if (SAVE_TRAIL) {
 		token = 52;
@@ -86,7 +100,7 @@ int main(int argc, char** argv) {
 				sensed_x = customRound(agent.pos[0] + std::cos(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				sensed_y = customRound(agent.pos[1] + std::sin(agent.theta + sensors[i]) * SENSOR_OFFSET);
 				if (PERIODIC_BOUNDARY) {
-					sensed[i] = trailField((sensed_x + SHAPE_WIDTH) % SHAPE_WIDTH, (sensed_y + SHAPE_HEIGHT) % SHAPE_HEIGHT, 0);
+					sensed[i] = trailField((sensed_x + 2 * SHAPE_WIDTH) % SHAPE_WIDTH, (sensed_y + 2 * SHAPE_HEIGHT) % SHAPE_HEIGHT, 0);
 				}
 				else {
 					// Check if out of bounds, return 0 otherwise
