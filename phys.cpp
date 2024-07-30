@@ -12,19 +12,20 @@ const float CONVERSION_DEG_TO_RAD = 2.f * PI / 360.f;
 // Simulation parameters
 const float TOTAL_UNITS = 1.0f;
 const int NUM_STEPS = 10000;
-const int NUM_AGENTS = 9000;
+const int NUM_AGENTS = 10000;
 const bool PERIODIC_BOUNDARY = true;
-const bool SAVE_TRAIL = true;
+const bool SAVE_TRAIL = false;
 const int SAVE_STEP = 1;
 int token; // Random token of the folder
 
 // Agent parameters
 int SENSOR_COUNT = 3;
-float SENSOR_OFFSET = TOTAL_UNITS / 10; // in units
+float SENSOR_OFFSET = TOTAL_UNITS * 38 / 300; // in units
 float SENSOR_ANGLE = 45.f * CONVERSION_DEG_TO_RAD;
 
-float AGENT_STEP = TOTAL_UNITS / 100; // Move, step size
+float AGENT_STEP = TOTAL_UNITS / 300; // Move, step size
 float ROTATION_ANGLE = 45.0f * CONVERSION_DEG_TO_RAD;
+const float RANDOM_ANGLE_ROTATION = 0.0f * CONVERSION_DEG_TO_RAD;
 
 float DELTA = 0.1f; // Deposit value
 float DECAY = 0.1f;
@@ -157,7 +158,7 @@ int main(int argc, char** argv) {
 				index = float(rand() % 3 - 1);
 			}
 			// 3. Rotate based on index
-			agent.theta += index * ROTATION_ANGLE;
+			agent.theta += index * ROTATION_ANGLE + RANDOM_ANGLE_ROTATION * (rand() % 2 - 1);
 			// 4. Move
 			agent.pos[0] += std::cos(agent.theta) * AGENT_STEP;
 			agent.pos[1] += std::sin(agent.theta) * AGENT_STEP;
